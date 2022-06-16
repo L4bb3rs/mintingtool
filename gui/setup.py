@@ -6,7 +6,7 @@ from setuptools import setup
 #    long_description = fh.read()
 
 dependencies = [
-    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@nft1_dogfooding_in_origin#afb74aee2fa33bdc88e94782e55e25205a89a0ee",
+    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.4.0#62e261a5ba48f96ef8f2b26369c2e064a05ac0f9",
     "requests"
 ]
 
