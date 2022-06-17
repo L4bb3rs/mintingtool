@@ -6,7 +6,7 @@ from setuptools import setup
 #    long_description = fh.read()
 
 dependencies = [
-    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.4.0#62e261a5ba48f96ef8f2b26369c2e064a05ac0f9",
+    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.4.0#25c3145c5f9ad5c50eaf0bae3bda890fc53b0360",
     "requests"
 ]
 

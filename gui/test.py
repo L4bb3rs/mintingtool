@@ -28,11 +28,10 @@ def main():
             [sg.Input(key='_IN_'),
             sg.Button('Run'),
             sg.Input(key='_FINGERPRINT_')],             # input field where you'll type command
-            [sg.Output(size=(120,30))],          # an output area where all print output will go
+            [sg.Output(size=(120,45))],          # an output area where all print output will go
             [sg.Button('startChia'),
             sg.Button('getFingerprint'),
             sg.Button('getPublic'),
-            sg.Button('addKey'),
             sg.Button('createWallet'),
             sg.Button('walletStatus'),
             sg.Button('mintNFT'),
@@ -62,9 +61,6 @@ def main():
             getPublic = "chia rpc wallet get_public_keys"
             runCommand(cmd=getPublic, window=window)
 
-        if event == 'addKey':
-            addKey = "chia rpc wallet add_key"
-            runCommand(cmd=addKey, window=window)
 
         if event == 'createWallet':
             createWallet = "chia rpc wallet create_new_wallet -j wallet.json"
@@ -90,7 +86,7 @@ def main():
 
 # This function does the actual "running" of the command.  Also watches for any output. If found output is printed
 def runCommand(cmd, timeout=20, window=None):
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     output = ''
     for line in p.stdout:
         line = line.decode(errors='replace' if (sys.version_info) < (3, 5) else 'backslashreplace').rstrip()
