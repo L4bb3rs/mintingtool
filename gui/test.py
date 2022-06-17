@@ -28,8 +28,11 @@ def main():
             [sg.Input(key='_IN_'),
             sg.Button('Run'),
             sg.Input(key='_FINGERPRINT_')],             # input field where you'll type command
-            [sg.Output(size=(120,45))],          # an output area where all print output will go
-            [sg.Button('startChia'),
+            [sg.Output(size=(120,55))],          # an output area where all print output will go
+            [sg.Button('initChia'),
+            sg.Button('generateKey'),
+            sg.Button('startChia'),
+            sg.Button('showKeys'),
             sg.Button('getFingerprint'),
             sg.Button('getPublic'),
             sg.Button('createWallet'),
@@ -49,9 +52,21 @@ def main():
         if event == 'Run':
             runCommand(cmd=values['_IN_'], window=window)
 
+        if event == 'initChia':
+            startChia = "chia init"
+            runCommand(cmd=initChia, window=window)
+
+        if event == 'generateKey':
+            startChia = "chia keys generate"
+            runCommand(cmd=generateKey, window=window)
+
         if event == 'startChia':
             startChia = "chia start wallet"
             runCommand(cmd=startChia, window=window)
+
+        if event == 'showKeys':
+            startChia = "chia keys show"
+            runCommand(cmd=showKeys, window=window)
 
         if event == 'getFingerprint':
             getFingerprint = "chia rpc wallet get_logged_in_fingerprint"
