@@ -1,47 +1,54 @@
+  # essential for functions
 import subprocess
 import sys
 import PySimpleGUI as sg
 from pathlib import Path
 from typing import Tuple, List, Optional
 
+  # cryptography and clvm
 import cdv.clibs as std_lib
 from blspy import G1Element
 from cdv.util.load_clvm import load_clvm
 from clvm.casts import int_from_bytes
 
+  # clsp
 from chia.types.blockchain_format.coin import Coin
 from chia.types.blockchain_format.program import Program
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.types.coin_spend import CoinSpend
 from chia.util.ints import uint64
+
+  # rpc
 from chia.rpc import (
-    full_node_rpc_api,
-    wallet_rpc_api,
+    full_node_rpc_client,
+    wallet_rpc_client,
+    rpc_client,
 )
+
+  # assets
+layout = [  [sg.Text('Enter a command to execute (e.g. dir or ls)'),
+        sg.Text('Enter the fingerprint to be used')],
+        [sg.Input(key='_IN_'),
+        sg.Button('Run'),
+        sg.Input(key='_FINGERPRINT_')],             # input field where you'll type command
+        [sg.Output(size=(120,50))],          # an output area where all print output will go
+        [sg.Button('initChia'),
+        sg.Button('generateKey'),
+        sg.Button('startChia'),
+        sg.Button('showKeys'),
+        sg.Button('getFingerprint'),
+        sg.Button('getPublic'),
+        sg.Button('createWallet'),
+        sg.Button('walletStatus'),
+        sg.Button('mintNFT'),
+        sg.Button('infoNFT'),
+        sg.Button('stopChia'),
+        sg.Button('Exit')] ]     # a couple of buttons
 
 sg.theme('BluePurple')
 
 
 def main():
-    layout = [  [sg.Text('Enter a command to execute (e.g. dir or ls)'),
-            sg.Text('Enter the fingerprint to be used')],
-            [sg.Input(key='_IN_'),
-            sg.Button('Run'),
-            sg.Input(key='_FINGERPRINT_')],             # input field where you'll type command
-            [sg.Output(size=(120,55))],          # an output area where all print output will go
-            [sg.Button('initChia'),
-            sg.Button('generateKey'),
-            sg.Button('startChia'),
-            sg.Button('showKeys'),
-            sg.Button('getFingerprint'),
-            sg.Button('getPublic'),
-            sg.Button('createWallet'),
-            sg.Button('walletStatus'),
-            sg.Button('mintNFT'),
-            sg.Button('infoNFT'),
-            sg.Button('stopChia'),
-            sg.Button('Exit')] ]     # a couple of buttons
-
     window = sg.Window('NFT Minting Tool', layout)
     while True:             # Event Loop
         event, values = window.Read()
