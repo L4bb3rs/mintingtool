@@ -6,8 +6,8 @@ from setuptools import setup
 #    long_description = fh.read()
 
 dependencies = [
-    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.4.0#25c3145c5f9ad5c50eaf0bae3bda890fc53b0360",
-    "requests"
+    "requests",
+    "chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.5.0#787e96b8edc6ed95ca7a6d6ade115a62e6bff672",
 ]
 
 dev_dependencies = [
@@ -15,7 +15,7 @@ dev_dependencies = [
 ]
 
 setup(
-    name="mintingtool",
+    name="NFTr_minting_tool",
     version="0.0.1",
     author="nftr",
     setup_requires=["setuptools_scm"],

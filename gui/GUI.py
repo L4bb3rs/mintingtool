@@ -13,13 +13,15 @@ import config
 from os import path
 
 ########################################## Define Defaults ##########################################
-loadingGIF = config.LOADING_GIF
+NETWORK_NAME = 'testnet10' #to-do add validation of selected network, if not selected network break and instruct user to change network via cli
+
+loadingGIF = config.LOADING_GIF #to-do add loading screen in thread
 
 THREAD_EVENT = '-THREAD-'
 SETTINGS_FILE = path.join(path.dirname(__file__), r'settings_file.cfg')
 DEFAULT_SETTINGS = {'fingerprint': 0xdeadbeef, 'nft_wallet_id': None , 'wallet_address': None , 'did': None , 'theme': sg.theme()}
 # "Map" from the settings dictionary keys to the window's element keys
-SETTINGS_KEYS_TO_ELEMENT_KEYS = {'fingerprint': '-FINGERPRINT-', 'nft_wallet_id': '-NFT WALLET ID-' , 'wallet_address': '-WALLET ADDRESS-' , 'did': '-DID-' , 'theme': '-THEME-'}
+SETTINGS_KEYS_TO_ELEMENT_KEYS = {'nft_wallet_id': '-NFT WALLET ID-' , 'wallet_address': '-WALLET ADDRESS-' , 'did': '-DID-' , 'theme': '-THEME-'}
 
 nft_data = {"wallet_id": 3,   # 3 is default as this should be the NFT wallet if no additional wallets have been created
             "uris": [""],
@@ -35,18 +37,6 @@ nft_data = {"wallet_id": 3,   # 3 is default as this should be the NFT wallet if
             "edition_count": 1,  #1/1 editions are default
             "fee": 615000000}   #min recommended minting fee is deafult
 
-########################################## Define Threading ##########################################
-def the_thread(window, values):
-    """
-    The thread that communicates with the application through the window's events.
-
-    Once a second wakes and sends a new event and associated value to the window
-    """
-    while True:
-        print(rpc_client.get_sync())
-        time.sleep(3)
-
-
 ########################################## Define Text Sizes ##########################################
 inputsize = (25,3)
 textsize1 = (5,1)
@@ -57,6 +47,8 @@ textsize4 = (80,1)
 ########################################## Define Text Boxes and Popups ##########################################
 def TextLabel(text): return sg.Text(text+':', justification='r', size=(15,1))
 def OutputText1(text): return sg.InputText(text, use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())
+def OutputText2(text, key): return sg.InputText(text, key=key, use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())
+
 
 def HeaderText1(key, tooltip): return sg.Text(key=key, size=(5,1), tooltip=tooltip)
 def HeaderText2(key, tooltip): return sg.Text(key=key, size=(15,1), tooltip=tooltip)
@@ -80,9 +72,15 @@ def load_settings(settings_file, default_settings):
         with open(settings_file, 'r') as f:
             settings = jsonload(f)
     except Exception as e:
-        PopupQuick(f'exception {e}' 'No settings file found... will create one for you') #to-do add settings for network, chia install root, etc
+        settings = ''
+        PopupQuick(f'exception {e}, No settings file found... will create one for you')
         settings = default_settings
         save_settings(settings_file, settings, None)
+        event, values = create_settings_window(settings).read(close=True)
+        if event == 'Save':
+            save_settings(SETTINGS_FILE, settings, values)
+        elif event in (sg.WIN_CLOSED, 'Exit'):
+            Popup('Settings window closed without saving', '', True)
     return settings
 
 def refresh_settings(settings, window, values):
@@ -94,16 +92,42 @@ def refresh_settings(settings, window, values):
 
 def save_settings(settings_file, settings, values):
     if values:      # if there are stuff specified by another window, fill in those values
-        for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:   # update window with the values read from settings file
+        for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:  # update window with the values read from settings file
             try:
-                window[SETTINGS_KEYS_TO_ELEMENT_KEYS[key]].update(value=settings[key])
+                settings[key] = values[SETTINGS_KEYS_TO_ELEMENT_KEYS[key]]
             except Exception as e:
-                print(f'Problem updating PySimpleGUI window from settings. Key = {key}')
+                print(f'Problem updating settings from window values. Key = {key}')
 
     with open(settings_file, 'w') as f:
         jsondump(settings, f)
 
-    print('Settings saved', '', True)
+    sg.popup('Settings saved')
+
+########################################## Make a settings window ##########################################
+def create_settings_window(settings):
+    sg.theme(settings['theme'])
+    if len(rpc_client.list_nft_wallets()) > 1: #adjust nft wallet list to be displayed properly
+        nft_wallet_list = rpc_client.list_nft_wallets()
+    else:
+        nft_wallet_list = json.dumps(rpc_client.list_nft_wallets())
+
+    layout = [[sg.Text('Settings', font='Any 15')], # to-do update initial settings to default on logged in fingerprint, pull first NFT wallet ID with associated DID, and display that DID. readd these to settings file so defaults can be stored
+             [TextLabel('Fingerprint'), OutputText1(rpc_client.get_fingerprint())],
+             [TextLabel('NFT Wallet ID'), sg.Combo(nft_wallet_list, size=(20, 20), key='-NFT WALLET ID-')],
+             [TextLabel('Wallet Address'),sg.Input(key='-WALLET ADDRESS-')],
+             [TextLabel('DID'), sg.Input(key='-DID-')],
+             [TextLabel('Theme'), sg.Combo(sg.theme_list(), size=(20, 20), key='-THEME-')],
+             [sg.Button('Save'), sg.Button('Exit')]]
+
+    window = sg.Window('Settings', layout, keep_on_top=True, finalize=True)
+
+    for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:   # update window with the values read from settings file
+        try:
+            window[SETTINGS_KEYS_TO_ELEMENT_KEYS[key]].update(value=settings[key])
+        except Exception as e:
+            print('Problem updating PySimpleGUI window from settings. Key = {key}', '', True)
+
+    return window
 
 ########################################## Define File Hashing ##########################################
 def file_hash(list):
@@ -174,18 +198,12 @@ def page_refresh(settings, window, values):
     message = ''
     print('running refresh')
     refresh_settings(settings, window, values)
-    fileHash, metaHash, licenseHash = hashing(values)
+    fileHash, metaHash, licenseHash = hashing(values) #to-do add image display to preview
     message = "{} \n Edition: {} out of {} \n File URL: {} \n File Hash: {} \n MetaData URL: {} \n MetaData Hash: {} \n License URL: {} \n License Hash: {} \n Royalty Percentage: {}% \n Minting Fees: 65,000,001 Mojo".format(values['_NAME_'], values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
     return message, fileHash, metaHash, licenseHash
 
-
-def refresh_thread(settings, window, values):  # to-do resolve threading issues
-    #threading.Thread(target=refresh, args=(settings, window, values), daemon=True).start()
-    time.sleep(4)
-    return refreshing
-
 ########################################## Minting Confirmations  ##########################################
-def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines minting confirmation message
+def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines minting confirmation message #to-do add image display to preview
     message = "Confirm that you would like to mint this NFT with total cost of 615,000,001 mojo: \n {} \n Edition: {} out of {} \n File URL: {} \n File Hash: {} \n MetaData URL: {} \n MetaData Hash: {} \n License URL: {} \n License Hash: {} \n Royalty Percentage: {}%".format(values['_NAME_'], values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
     mint_confirm(message, values, settings)
 
@@ -201,54 +219,77 @@ def mint_confirm(message, values, settings): #creates minting confirmation popup
 ########################################## Minting the NFT  ##########################################
 def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the necessary dict object for minting
     try:
-        nft_data['wallet_id'] = int(settings['nft_wallet_id'])
-        nft_data['uris'][0] = str(values['_U_'])
-        nft_data['hash'] = fileHash
-        nft_data['meta_uris'][0] = str(values['_MU_'])
-        nft_data['meta_hash'] = metaHash
-        nft_data['license_uris'][0] = str(values['_LU_'])
-        nft_data['license_hash'] = licenseHash
-        nft_data['royalty_address'] = settings['wallet_address']
-        nft_data['royalty_percentage'] = values['_RP_']
-        nft_data['target_address'] = settings['wallet_address']
-        nft_data['edition_number'] =  int(values['_EN_'])
-        nft_data['edition_count'] = int(values['_EC_'])
+        if settings['nft_wallet_id']:   # to-do iterate through these checks
+            nft_data['wallet_id'] = int(settings['nft_wallet_id'])
+        else:
+            print('error adding wallet ID to json data')
+        if values['_U_']:
+            nft_data['uris'][0] = str(values['_U_'])
+        else:
+            print('error adding file url to json data')
+        if fileHash:
+            nft_data['hash'] = fileHash
+        else:
+            print('error adding file hash to json data')
+        if values['_MU_']:
+            nft_data['meta_uris'][0] = str(values['_MU_'])
+        else:
+            print('error adding meta URL to json data')
+        if metaHash:
+            nft_data['meta_hash'] = metaHash
+        else:
+            print('error adding meta hash to json data')
+
+        if values['_LU_']:
+            nft_data['license_uris'][0] = str(values['_LU_'])
+        else:
+            print('error adding license URL to json data')
+
+        if licenseHash:
+            nft_data['license_hash'] = licenseHash
+        else:
+            print('error adding license hash to json data')
+
+        if settings['wallet_address']:
+            nft_data['royalty_address'] = settings['wallet_address']
+        else:
+            print('error adding royalty address to json data')
+
+        if values['_RP_']:
+            nft_data['royalty_percentage'] = values['_RP_']
+        else:
+            print('error adding file hash to json data')
+
+        if settings['wallet_address']:
+            nft_data['target_address'] = settings['wallet_address']
+        else:
+            print('error adding target wallet to json data')
+
+        if values['_EN_']:
+            nft_data['edition_number'] =  int(values['_EN_'])
+        else:
+            print('error adding edition number to json data')
+
+        if values['_EC_']:
+            nft_data['edition_count'] = int(values['_EC_'])
+        else:
+            print('error adding edition count to json data')
+
         data_dump = json.dumps(nft_data)
     except Exception as e:
         print('could not create json data, please verify inputs and try again')
+        data_dump = 'error'
     return data_dump
 
 def mint(values, settings): #formats the json object based on the dict object and submits the RPC command
     fileHash, metaHash, licenseHash = hashing(values)
     data_dump = mint_nft(settings, values, fileHash, metaHash, licenseHash)
     data = "'" + data_dump + "'"
-    print(data)
-    Popup('Minting NFT', '', True)
+    print(data) #to-do add mint RPC, pull response for transaction, run transaction monitor
+    Popup('Minting NFT: The process can \n take upwards of 2 minutes', '', True)
 
 def cancel_mint(): #cancels minting to allow user to edit information
-    print("Mint Cancelled by User")
-
-########################################## Settings Window ##########################################
-def create_settings_window(settings):
-    sg.theme(settings['theme'])
-
-    layout = [[sg.Text('Settings', font='Any 15')],
-             [TextLabel('Fingerprint'), sg.Input(key='-FINGERPRINT-')],
-             [TextLabel('NFT Wallet ID'),sg.Input(key='-NFT WALLET ID-')],
-             [TextLabel('Wallet Address'),sg.Input(key='-WALLET ADDRESS-')],
-             [TextLabel('DID'),sg.Input(key='-DID-')],
-             [TextLabel('Theme'),sg.Combo(sg.theme_list(), size=(20, 20), key='-THEME-')],
-             [sg.Button('Save'), sg.Button('Exit')]]
-
-    window = sg.Window('Settings', layout, keep_on_top=True, finalize=True)
-
-    for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:   # update window with the values read from settings file
-        try:
-            window[SETTINGS_KEYS_TO_ELEMENT_KEYS[key]].update(value=settings[key])
-        except Exception as e:
-            Popup('Problem updating PySimpleGUI window from settings. Key = {key}', '', True)
-
-    return window
+    Popup('Mint Cancelled by User', '', True)
 
 ########################################## About Window ##########################################
 def create_about_window(settings):
@@ -269,13 +310,10 @@ def create_about_window(settings):
     return window
 
 ########################################## Loading GIF ##########################################
-def loading(loadingGIF, time): #to-do add in main loop as a subprocess or thread
+def loading(time): #to-do add in main loop as a subprocess or thread
     for i in range(time):
         sg.PopupAnimated(loadingGIF, background_color='white', time_between_frames=100)
     sg.PopupAnimated(None)
-
-def loading_thread(loadingGIF, time):
-    threading.Thread(target=loading, args=(loadingGIF, time), daemon=True).start()
 
 ########################################## Main Program Window ##########################################
 def create_main_window(settings):
@@ -296,7 +334,7 @@ def create_main_window(settings):
                TextLabel('DID'), HeaderText3('-DID-', 'Currently Selected DID'),
                TextLabel('Theme'), HeaderText2('-THEME-', 'Currently Selected Theme')]]
 
-    #necessary for creating the json used in created RPC commands
+    #necessary for creating the json used in RPC commands
     onchainmeta = [sg.Frame('On-Chain Metadata',
                   [[TextLabel('Edition Number'), InputText2('_EN_', 'This NFTs Edition Number (default 1)')],
                    [TextLabel('Edition Total'), InputText2('_EC_', 'Total Editions of this NFT (default 1)')],
@@ -336,44 +374,63 @@ def create_main_window(settings):
                       layout,
                       right_click_menu=right_click_menu, size=(1450,450))
 
+########################################## Define Threading ##########################################
+def the_thread():
+    """
+    The thread that communicates with the application through the window's events.
+
+    Once a second wakes and sends a new event and associated value to the window
+    """
+    i = 0
+    while True:
+        try:
+            network_name = rpc_client.get_network()
+            if network_name != NETWORK_NAME:
+                print(f'Chia instance is operating on {network_name}')
+            print(rpc_client.get_sync())
+            i += 1
+        except Exception as e:
+            print('login_status: ')
+            print('Could not contact Chia instance, please make sure it is running and synced')
+        time.sleep(7)
+
 ########################################## Event Loop ##########################################
 def main():
     window, settings = None, load_settings(SETTINGS_FILE, DEFAULT_SETTINGS)
 
-    while True:   #Event loop
+    while True:             # Event Loop
         if window is None:
             window = create_main_window(settings)
+            threading.Thread(target=the_thread, args=(), daemon=True).start()
 
         event, values = window.read()
         #break if window closed or other exit event
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
-
-        else:
-            #process output
-            if event == 'Preview':
-                print('starting')
-                refresh(settings, window, values)
-                #loading(loadingGIF, 3500) #to-do add loading gif into thread
-                #refresh_thread(settings, window, values)
-            #mint NFT popup
-            if event == 'Mint NFT':
-                #loading(loadingGIF, 10000) #to-do add loading gif into thread
-                fileHash, metaHash, licenseHash = refresh(settings, window, values)
-                mint_confirmed = mint_popup(settings, values, fileHash, metaHash, licenseHash)
-            #change settings
-            if event in ('Change Settings', 'Settings'):
-                event, values = create_settings_window(settings).read(close=True)
-                if event == 'Save':
-                    window.close()
-                    window = None
-                    save_settings(SETTINGS_FILE, settings, values)
-                elif event in (sg.WIN_CLOSED, 'Exit'):
-                    window.close()
-                    window = None
-                    Popup('Settings window closed without saving', '', True)
-            #about window
-            if event == 'About...':
-                event, values = create_about_window(settings).read(close=True)
+        #process output
+        if event == 'Preview':
+            #loading(10000) #to-do add loading gif into thread
+            print('starting output refresh')
+            refresh(settings, window, values)
+        if event == 'Mint NFT':
+            #loading(10000) #to-do add loading gif into thread
+            fileHash, metaHash, licenseHash = refresh(settings, window, values)
+            mint_confirmed = mint_popup(settings, values, fileHash, metaHash, licenseHash)
+        #change settings
+        if event in ('Change Settings', 'Settings'):
+            event, values = create_settings_window(settings).read(close=True)
+            if event == 'Save':
+                window.close()
+                window = None
+                save_settings(SETTINGS_FILE, settings, values)
+            elif event in (sg.WIN_CLOSED, 'Exit'):
+                window.close()
+                window = None
+                Popup('Settings window closed without saving', '', True)
+        #about window
+        if event == 'About...':
+            event, values = create_about_window(settings).read(close=True)
     window.close()
+
+
 main()
