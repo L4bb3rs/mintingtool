@@ -19,9 +19,9 @@ loadingGIF = config.LOADING_GIF #to-do add loading screen in thread
 
 THREAD_EVENT = '-THREAD-'
 SETTINGS_FILE = path.join(path.dirname(__file__), r'settings_file.cfg')
-DEFAULT_SETTINGS = {'fingerprint': 0xdeadbeef, 'nft_wallet_id': None , 'wallet_address': None , 'did': None , 'theme': sg.theme()}
+DEFAULT_SETTINGS = {'fingerprint': 0xdeadbeef, 'nft_wallet_id': None , 'wallet_address': None , 'theme': sg.theme()}
 # "Map" from the settings dictionary keys to the window's element keys
-SETTINGS_KEYS_TO_ELEMENT_KEYS = {'nft_wallet_id': '-NFT WALLET ID-' , 'wallet_address': '-WALLET ADDRESS-' , 'did': '-DID-' , 'theme': '-THEME-'}
+SETTINGS_KEYS_TO_ELEMENT_KEYS = {'nft_wallet_id': '-NFT WALLET ID-' , 'wallet_address': '-WALLET ADDRESS-' , 'theme': '-THEME-'} #DID to be added once wallet creation is added
 
 nft_data = {"wallet_id": 3,   # 3 is default as this should be the NFT wallet if no additional wallets have been created
             "uris": [""],
@@ -48,7 +48,7 @@ textsize4 = (80,1)
 def TextLabel(text): return sg.Text(text+':', justification='r', size=(15,1))
 def OutputText1(text): return sg.InputText(text, use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())
 def OutputText2(text, key): return sg.InputText(text, key=key, use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())
-
+def OutputText3(text, key, tooltip): return sg.InputText(text, key=key, size=textsize2, tooltip=tooltip, use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())
 
 def HeaderText1(key, tooltip): return sg.Text(key=key, size=(5,1), tooltip=tooltip)
 def HeaderText2(key, tooltip): return sg.Text(key=key, size=(15,1), tooltip=tooltip)
@@ -59,6 +59,7 @@ def InputText1(key, tooltip): return sg.Input(key=key, size=textsize1, tooltip=t
 def InputText2(key, tooltip): return sg.Input(key=key, size=textsize2, tooltip=tooltip)
 def InputText3(key, tooltip): return sg.Input(key=key, size=textsize3, tooltip=tooltip)
 def InputText4(key, tooltip): return sg.Input(key=key, size=textsize4, tooltip=tooltip)
+def InputText5(text, key, tooltip): return sg.Input(text, key=key, size=textsize2, tooltip=tooltip)
 
 def ComingSoon(title, text, tooltip): return sg.Frame(title ,[[sg.Text(text, size = textsize2, tooltip=tooltip)]])
 
@@ -114,8 +115,8 @@ def create_settings_window(settings):
     layout = [[sg.Text('Settings', font='Any 15')], # to-do update initial settings to default on logged in fingerprint, pull first NFT wallet ID with associated DID, and display that DID. readd these to settings file so defaults can be stored
              [TextLabel('Fingerprint'), OutputText1(rpc_client.get_fingerprint())],
              [TextLabel('NFT Wallet ID'), sg.Combo(nft_wallet_list, size=(20, 20), key='-NFT WALLET ID-')],
-             [TextLabel('Wallet Address'),sg.Input(key='-WALLET ADDRESS-')],
-             [TextLabel('DID'), sg.Input(key='-DID-')],
+             [TextLabel('Wallet Address'),sg.Input(rpc_client.get_address(), key='-WALLET ADDRESS-')],
+             #[TextLabel('DID'), sg.Input(key='-DID-')],
              [TextLabel('Theme'), sg.Combo(sg.theme_list(), size=(20, 20), key='-THEME-')],
              [sg.Button('Save'), sg.Button('Exit')]]
 
@@ -142,13 +143,17 @@ def file_hash(list):
         print('hash list: {}'.format(hash_list))
         if u > 0: #separate into own function and iterate though full hash list at once
             if hash_list[u] == hash_list[0]:
+                print('################# HASH CONFIRMED ###################')
                 print('hash #{} matches the first url file hash'.format(u+1))
                 hash_verify = hash_list[0]
+                print('################# END CONFIRMED HASH ###############')
             else:
+                print('################### HASH FAILED #####################')
                 print('hash #{} does not match the first url file hash\n'.format(u+1))
                 print('first file hash: {}'.format(hash_list[0]))
                 print('mismatched file hash: {}'.format(hash_list[u]))
                 hash_verify = 'hash #{} does not match the first url file hash'.format(u+1)
+                print('################### END FAILED HASH #################')
         else:
             hash_verify = hash_list[0]
         u = u + 1
@@ -199,16 +204,16 @@ def page_refresh(settings, window, values):
     print('running refresh')
     refresh_settings(settings, window, values)
     fileHash, metaHash, licenseHash = hashing(values) #to-do add image display to preview
-    message = "{} \n Edition: {} out of {} \n File URL: {} \n File Hash: {} \n MetaData URL: {} \n MetaData Hash: {} \n License URL: {} \n License Hash: {} \n Royalty Percentage: {}% \n Minting Fees: 65,000,001 Mojo".format(values['_NAME_'], values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
+    message = "Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}% \n \n Minting Fees: 65,000,001 Mojo".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
     return message, fileHash, metaHash, licenseHash
 
 ########################################## Minting Confirmations  ##########################################
 def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines minting confirmation message #to-do add image display to preview
-    message = "Confirm that you would like to mint this NFT with total cost of 615,000,001 mojo: \n {} \n Edition: {} out of {} \n File URL: {} \n File Hash: {} \n MetaData URL: {} \n MetaData Hash: {} \n License URL: {} \n License Hash: {} \n Royalty Percentage: {}%".format(values['_NAME_'], values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
+    message = "Confirm that you would like to mint this NFT with total cost of 615,000,001 mojo: \n \n Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}%".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
     mint_confirm(message, values, settings)
 
 def mint_confirm(message, values, settings): #creates minting confirmation popup
-    layout = [[sg.Text(message)],
+    layout = [[sg.Multiline(message, size = (90, 35))],
              [sg.Button('Confirm'), sg.Button('Cancel/Edit')]]
     eventMint, valuesMint = sg.Window('NFT Minting Confirmation', layout, modal=True).read(close=True)
     if eventMint == 'Confirm':
@@ -284,9 +289,10 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
 def mint(values, settings): #formats the json object based on the dict object and submits the RPC command
     fileHash, metaHash, licenseHash = hashing(values)
     data_dump = mint_nft(settings, values, fileHash, metaHash, licenseHash)
-    data = "'" + data_dump + "'"
-    print(data) #to-do add mint RPC, pull response for transaction, run transaction monitor
-    Popup('Minting NFT: The process can \n take upwards of 2 minutes', '', True)
+    data = data_dump
+    print(data) #to-do pull response for transaction, run transaction monitor
+    print(rpc_client.nft_mint_nft(data))
+    Popup(' Minting NFT: The process can \n take upwards of 2 minutes. \n The NFT will appear in your Chia client once minted', '', True)
 
 def cancel_mint(): #cancels minting to allow user to edit information
     Popup('Mint Cancelled by User', '', True)
@@ -331,23 +337,23 @@ def create_main_window(settings):
               [TextLabel('Fingerprint'), HeaderText1('-FINGERPRINT-', 'Currently Selected Fingerprint'),
                TextLabel('NFT Wallet ID'), HeaderText1('-NFT WALLET ID-', 'Currently Selected NFT Wallet ID'),
                TextLabel('Wallet Address'), HeaderText3('-WALLET ADDRESS-', 'Currently Selected Wallet Address'),
-               TextLabel('DID'), HeaderText3('-DID-', 'Currently Selected DID'),
+               #TextLabel('DID'), HeaderText3('-DID-', 'Currently Selected DID'),
                TextLabel('Theme'), HeaderText2('-THEME-', 'Currently Selected Theme')]]
 
     #necessary for creating the json used in RPC commands
     onchainmeta = [sg.Frame('On-Chain Metadata',
-                  [[TextLabel('Edition Number'), InputText2('_EN_', 'This NFTs Edition Number (default 1)')],
-                   [TextLabel('Edition Total'), InputText2('_EC_', 'Total Editions of this NFT (default 1)')],
+                  [[TextLabel('Edition Number'), OutputText3('1', '_EN_', 'This field will not be active until Chia ver 1.5.1 is available (default 1)')],
+                   [TextLabel('Edition Total'), OutputText3('1', '_EC_', 'This field will not be active until Chia ver 1.5.1 is available (default 1)')],
                    [TextLabel('File URL/URI'), InputText4('_U_', 'This NFTs File URI/URL')],
                    [TextLabel('Metadata URL/URI'), InputText4('_MU_', 'This NFTs Metadata URI/URL')],
                    [TextLabel('License URL/URI'), InputText4('_LU_', 'This NFTs License URI/URL')],
-                   [TextLabel('Royalty Percentage'), InputText2('_RP_', 'This NFTs Royalty Percentage (default 5 = 5%)')]])]
+                   [TextLabel('Royalty Percentage'), InputText5('5', '_RP_', 'This NFTs Royalty Percentage (default 5 = 5%)')]])]
 
     #to be added once uploading capability is integrated
     offchainmeta = [ComingSoon('Off-Chain Metadata', 'Coming Soon', 'Off-Chain Metadata will be added once Auto-upload is incorporated')]
 
     #consolidation of entry fields
-    entryFields = [[TextLabel('Name'), InputText('_NAME_', 'Note: NFT name will be extracted from off-chain metadata for minting')],
+    entryFields = [#[TextLabel('Name'), InputText('_NAME_', 'Note: NFT name will be extracted from off-chain metadata for minting')],
                   #[TextLabel('File'), sg.Input(size = inputsize, key='_FILE2_'), sg.FileBrowse(size = textsize1, key='_FILE_')], #to be added once autoupload is integrated
                   onchainmeta,
                   offchainmeta,
@@ -375,7 +381,7 @@ def create_main_window(settings):
                       right_click_menu=right_click_menu, size=(1450,450))
 
 ########################################## Define Threading ##########################################
-def the_thread():
+def the_thread(): #threading to verify client sync, not currently in use
     """
     The thread that communicates with the application through the window's events.
 
@@ -394,6 +400,20 @@ def the_thread():
             print('Could not contact Chia instance, please make sure it is running and synced')
         time.sleep(7)
 
+########################################## Define Threading ##########################################
+def sync_verify(): #sync and network verification
+    try:
+        if rpc_client.get_sync() == 'Synced':
+            network_name = rpc_client.get_network()
+            if network_name != NETWORK_NAME:
+                Popup(f' Chia instance is operating on {network_name} \n Please migrate your chia instance to {NETWORK_NAME} \n and restart this client', '', True)
+                window = None
+        else:
+            Popup(f' Chia instance is not synced \n Please verify your chia instance is synced and restart this client', '', True)
+    except Exception as e:
+        print('login_status: ')
+        print('Could not contact Chia instance, please make sure it is running and synced')
+
 ########################################## Event Loop ##########################################
 def main():
     window, settings = None, load_settings(SETTINGS_FILE, DEFAULT_SETTINGS)
@@ -401,7 +421,8 @@ def main():
     while True:             # Event Loop
         if window is None:
             window = create_main_window(settings)
-            threading.Thread(target=the_thread, args=(), daemon=True).start()
+            sync_verify()
+            #threading.Thread(target=the_thread, args=(), daemon=True).start()
 
         event, values = window.read()
         #break if window closed or other exit event
