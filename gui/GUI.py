@@ -287,12 +287,15 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
     return data_dump
 
 def mint(values, settings): #formats the json object based on the dict object and submits the RPC command
-    fileHash, metaHash, licenseHash = hashing(values)
-    data_dump = mint_nft(settings, values, fileHash, metaHash, licenseHash)
-    data = data_dump
-    print(data) #to-do pull response for transaction, run transaction monitor
-    print(rpc_client.nft_mint_nft(data))
-    Popup(' Minting NFT: The process can \n take upwards of 2 minutes. \n The NFT will appear in your Chia client once minted', '', True)
+    if rpc_client.get_sync() == 'Synced':
+        fileHash, metaHash, licenseHash = hashing(values)
+        data_dump = mint_nft(settings, values, fileHash, metaHash, licenseHash)
+        data = data_dump
+        print(data) #to-do pull response for transaction, run transaction monitor
+        print(rpc_client.nft_mint_nft(data))
+        Popup(' Minting NFT: The process can \n take upwards of 2 minutes. \n The NFT will appear in your Chia client once minted', '', True)
+    else:
+        Popup(f' Chia instance is not synced \n Please verify your chia instance is synced and reconfirm this mint', '', True)
 
 def cancel_mint(): #cancels minting to allow user to edit information
     Popup('Mint Cancelled by User', '', True)
