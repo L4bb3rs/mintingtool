@@ -204,12 +204,14 @@ def page_refresh(settings, window, values):
     print('running refresh')
     refresh_settings(settings, window, values)
     fileHash, metaHash, licenseHash = hashing(values) #to-do add image display to preview
-    message = "Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}% \n \n Minting Fees: 65,000,001 Mojo".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
+    rp = int(values['_RP_']) / 100
+    message = "Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}% \n \n Minting Fees: 65,000,001 Mojo".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, rp)
     return message, fileHash, metaHash, licenseHash
 
 ########################################## Minting Confirmations  ##########################################
 def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines minting confirmation message #to-do add image display to preview
-    message = "Confirm that you would like to mint this NFT with total cost of 615,000,001 mojo: \n \n Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}%".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, values['_RP_'])
+    rp = int(values['_RP_']) / 100
+    message = "Confirm that you would like to mint this NFT with total cost of 615,000,001 mojo: \n \n Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}%".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, rp)
     mint_confirm(message, values, settings)
 
 def mint_confirm(message, values, settings): #creates minting confirmation popup
