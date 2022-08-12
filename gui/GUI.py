@@ -350,7 +350,7 @@ def create_main_window(settings):
                    [TextLabel('File URL/URI'), InputText4('_U_', 'This NFTs File URI/URL')],
                    [TextLabel('Metadata URL/URI'), InputText4('_MU_', 'This NFTs Metadata URI/URL')],
                    [TextLabel('License URL/URI'), InputText4('_LU_', 'This NFTs License URI/URL')],
-                   [TextLabel('Royalty Percentage'), InputText5('5', '_RP_', 'This NFTs Royalty Percentage (default 5 = 5%)')]])]
+                   [TextLabel('Royalty Percentage'), InputText5('500', '_RP_', 'This NFTs Royalty Percentage (default 500 = 5%)')]])]
 
     #to be added once uploading capability is integrated
     offchainmeta = [ComingSoon('Off-Chain Metadata', 'Coming Soon', 'Off-Chain Metadata will be added once Auto-upload is incorporated')]
