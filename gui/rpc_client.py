@@ -128,11 +128,14 @@ def list_nft_wallets(): #lists the id of all NFT wallets that have associated di
     nft_wallet_list = []
     url_option = "nft_get_wallets_with_dids"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    if len(response['nft_wallets']) > 1:
-        for wallet in response['nft_wallets']:
-            nft_wallet_list.append(wallet['wallet_id'])
+    if len(response['nft_wallets']) == 0:
+        print('No NFT Wallets can be found, please create an NFT wallet and restart this application')
     else:
-        nft_wallet_list = response['nft_wallets'][0]['wallet_id']
+        if len(response['nft_wallets']) > 1:
+            for wallet in response['nft_wallets']:
+                nft_wallet_list.append(wallet['wallet_id'])
+        else:
+            nft_wallet_list = response['nft_wallets'][0]['wallet_id']
     return nft_wallet_list
 
 def list_dids(): #to-do link this call to GUI.py to pull DID for selected wallet (one method of doing so, other method is extracting DID information from nft wallet command above)
@@ -143,10 +146,17 @@ def list_dids(): #to-do link this call to GUI.py to pull DID for selected wallet
 
 def list_wallets(): #lists all wallets with id, type, and name
     wallet_list = ''
-    url_option = "get_wallets"
+    url_option = "nft_get_wallets_with_dids"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    for wallet in range(len(response['wallets'])):
-        wallet_list = wallet_list + 'wallet_id: ' + str(response['wallets'][wallet]['id']) + ', wallet_type: ' + str(response['wallets'][wallet]['type']) + ', wallet_name: ' + str(response['wallets'][wallet]['name'])
+    if len(response['nft_wallets']) == 0:
+        print('No NFT Wallets can be found, please create an NFT wallet and restart this application')
+        wallet_list = 'No NFT Wallets can be found, please create an NFT wallet and restart this application'
+    else:
+        if len(response) > 1:
+            for w in range(len(response['nft_wallets'])):
+                wallet_list = wallet_list + (' Wallet_ID: ' + str(response['nft_wallets'][w]['wallet_id']) + '\n DID: ' + response['nft_wallets'][w]['did_id'] + '\n \n')
+        else:
+            wallet_list = ' Wallet_ID: ' + response['nft_wallets'][0]['wallet_id'] + '\n DID: ' + response['nft_wallets'][0]['did_id']
     return wallet_list
 
 def get_network(): #network prefix field has been added for future functionality
@@ -210,6 +220,7 @@ def get_address():
 #            print(list_nft_wallets())
 #            print(list_dids())
     #print(get_address())
-    #data = {"wallet_id": 3, "uris": ["https://nftr.pro/images/NFTr-logo.svg"], "hash": "e04c5b119bc4ab5f899c3d2af8d25bfe8e295ef5c5b0367c29b406dea46e645a", "meta_uris": ["https://nftr.pro/tests/testMeta.json"], "meta_hash": "f4b4f9a055dde716870a72e99aa3a61748cbe31f300a6fc533699300822755f8", "license_uris": ["https://nftr.pro/tests/testLicense.md"], "license_hash": "6738c0576f1ba0f7aa41f687ceb97bbabc361380e73e75b6abbce6a718146c6e", "royalty_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "royalty_percentage": 5, "target_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "edition_number": 1, "edition_count": 1, "fee": 615000000}
+    #data = {"wallet_id": 3, "uris": ["https://nftr.pro/images/NFTr-logo.svg"], "hash": "e04c5b119bc4ab5f899c3d2af8d25bfe8e295ef5c5b0367c29b406dea46e645a", "meta_uris": ["https://nftr.pro/tests/testMeta.json"], "meta_hash": "f4b4f9a055dde716870a72e99aa3a61748cbe31f300a6fc533699300822755f8", "license_uris": ["https://nftr.pro/tests/testLicense.md"], "license_hash": "6738c0576f1ba0f7aa41f687ceb97bbabc361380e73e75b6abbce6a718146c6e", "royalty_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "royalty_percentage": 500, "target_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "edition_number": 1, "edition_count": 1, "fee": 615000000}
     #print(nft_mint_nft(data))
+    #print(list_wallets())
 #main()
