@@ -7,6 +7,7 @@ from setuptools import setup
 
 dependencies = [
     "requests",
+    "pyinstaller"
     #"chia-blockchain@git+https://github.com/Chia-Network/chia-blockchain.git@release/1.5.0#787e96b8edc6ed95ca7a6d6ade115a62e6bff672",
 ]
 

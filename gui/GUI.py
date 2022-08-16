@@ -15,6 +15,8 @@ from os import path
 ########################################## Define Defaults ##########################################
 NETWORK_NAME = 'testnet10' #to-do add validation of selected network, if not selected network break and instruct user to change network via cli
 
+CUSTOM_ICON = path.join(path.dirname(__file__), r'NFTr.ico')
+
 loadingGIF = config.LOADING_GIF #to-do add loading screen in thread
 
 THREAD_EVENT = '-THREAD-'
@@ -104,23 +106,30 @@ def save_settings(settings_file, settings, values):
 
     sg.popup('Settings saved')
 
+########################################## Wallet IDs Popup  ##########################################
+def wallet_popup(): #defines Wallet IDs popup window
+    message = rpc_client.list_wallets()
+    layout = [[sg.Multiline(message, size = (90, 35))]]
+    sg.Window('NFT Wallet List', layout, keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
+
 ########################################## Make a settings window ##########################################
 def create_settings_window(settings):
     sg.theme(settings['theme'])
-    if len(rpc_client.list_nft_wallets()) > 1: #adjust nft wallet list to be displayed properly
-        nft_wallet_list = rpc_client.list_nft_wallets()
-    else:
+    if type(rpc_client.list_nft_wallets()) == int: #adjust nft wallet list to be displayed properly
         nft_wallet_list = json.dumps(rpc_client.list_nft_wallets())
+    else:
+        nft_wallet_list = rpc_client.list_nft_wallets()
+
 
     layout = [[sg.Text('Settings', font='Any 15')], # to-do update initial settings to default on logged in fingerprint, pull first NFT wallet ID with associated DID, and display that DID. readd these to settings file so defaults can be stored
              [TextLabel('Fingerprint'), OutputText1(rpc_client.get_fingerprint())],
              [TextLabel('NFT Wallet ID'), sg.Combo(nft_wallet_list, size=(20, 20), key='-NFT WALLET ID-')],
-             [TextLabel('Wallet Address'),sg.Input(rpc_client.get_address(), key='-WALLET ADDRESS-')],
+             [TextLabel('Wallet Address'), sg.Input(rpc_client.get_address(), key='-WALLET ADDRESS-')],
              #[TextLabel('DID'), sg.Input(key='-DID-')],
              [TextLabel('Theme'), sg.Combo(sg.theme_list(), size=(20, 20), key='-THEME-')],
              [sg.Button('Save'), sg.Button('Exit')]]
 
-    window = sg.Window('Settings', layout, keep_on_top=True, finalize=True)
+    window = sg.Window('Settings', layout, keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
 
     for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:   # update window with the values read from settings file
         try:
@@ -217,7 +226,7 @@ def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines mint
 def mint_confirm(message, values, settings): #creates minting confirmation popup
     layout = [[sg.Multiline(message, size = (90, 35))],
              [sg.Button('Confirm'), sg.Button('Cancel/Edit')]]
-    eventMint, valuesMint = sg.Window('NFT Minting Confirmation', layout, modal=True).read(close=True)
+    eventMint, valuesMint = sg.Window('NFT Minting Confirmation', layout, modal=True, icon=CUSTOM_ICON).read(close=True)
     if eventMint == 'Confirm':
         mint(values, settings)
     else:
@@ -263,7 +272,7 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
             print('error adding royalty address to json data')
 
         if values['_RP_']:
-            nft_data['royalty_percentage'] = values['_RP_']
+            nft_data['royalty_percentage'] = int(values['_RP_'])
         else:
             print('error adding file hash to json data')
 
@@ -292,10 +301,14 @@ def mint(values, settings): #formats the json object based on the dict object an
     if rpc_client.get_sync() == 'Synced':
         fileHash, metaHash, licenseHash = hashing(values)
         data_dump = mint_nft(settings, values, fileHash, metaHash, licenseHash)
-        data = data_dump
+        data = json.loads(data_dump)
         print(data) #to-do pull response for transaction, run transaction monitor
-        print(rpc_client.nft_mint_nft(data))
-        Popup(' Minting NFT: The process can \n take upwards of 2 minutes. \n The NFT will appear in your Chia client once minted', '', True)
+        response = rpc_client.nft_mint_nft(data)
+        print(response)
+        if response['success'] == False:
+            print('error in minting NFT, please check entries and try again')
+        else:
+            Popup(' Minting NFT: The process can \n take upwards of 2 minutes. \n The NFT will appear in your Chia client once minted', '', True)
     else:
         Popup(f' Chia instance is not synced \n Please verify your chia instance is synced and reconfirm this mint', '', True)
 
@@ -316,7 +329,7 @@ def create_about_window(settings):
 
     column1 = [[sg.Frame('About Mintr', layout = aboutSection, border_width=10)], [sg.Button('Close')]]
 
-    window = sg.Window('About', column1, size=(425,250), keep_on_top=True, finalize=True)
+    window = sg.Window('About', column1, size=(425,250), keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
 
     return window
 
@@ -331,7 +344,7 @@ def create_main_window(settings):
     sg.theme(settings['theme'])
 
     #define menu bar and options
-    menu_def = [['File', ['Change Settings', 'Exit']],
+    menu_def = [['File', ['Change Settings', 'List Wallet IDs', 'Exit']],
                 ['Help', 'About...']]
 
     #define menu bar and options, to-do add functionality of right click menu
@@ -383,15 +396,12 @@ def create_main_window(settings):
     #define window
     return sg.Window("MINTr",
                       layout,
-                      right_click_menu=right_click_menu, size=(1450,450))
+                      right_click_menu=right_click_menu,
+                      size=(1450,450),
+                      icon=CUSTOM_ICON)
 
 ########################################## Define Threading ##########################################
-def the_thread(): #threading to verify client sync, not currently in use
-    """
-    The thread that communicates with the application through the window's events.
-
-    Once a second wakes and sends a new event and associated value to the window
-    """
+def the_thread(): #threading to be used for file uploads and monitoring transactions, not currently in use
     i = 0
     while True:
         try:
@@ -443,6 +453,8 @@ def main():
             fileHash, metaHash, licenseHash = refresh(settings, window, values)
             mint_confirmed = mint_popup(settings, values, fileHash, metaHash, licenseHash)
         #change settings
+        if event == 'List Wallet IDs':
+            wallet_popup()
         if event in ('Change Settings', 'Settings'):
             event, values = create_settings_window(settings).read(close=True)
             if event == 'Save':
