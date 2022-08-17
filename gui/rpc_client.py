@@ -220,7 +220,7 @@ def get_address():
 #            print(list_nft_wallets())
 #            print(list_dids())
     #print(get_address())
-    #data = {"wallet_id": 3, "uris": ["https://nftr.pro/images/NFTr-logo.svg"], "hash": "e04c5b119bc4ab5f899c3d2af8d25bfe8e295ef5c5b0367c29b406dea46e645a", "meta_uris": ["https://nftr.pro/tests/testMeta.json"], "meta_hash": "f4b4f9a055dde716870a72e99aa3a61748cbe31f300a6fc533699300822755f8", "license_uris": ["https://nftr.pro/tests/testLicense.md"], "license_hash": "6738c0576f1ba0f7aa41f687ceb97bbabc361380e73e75b6abbce6a718146c6e", "royalty_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "royalty_percentage": 500, "target_address": "xch10wyzx0958p2m2zthkrknzkkr2dlelr5wmfdansqr6mqdmxls5evqn3q8x2", "edition_number": 1, "edition_count": 1, "fee": 615000000}
+    #data = {'wallet_id': 2, 'uris': ['https://nftr.pro/images/NFTr-logo.svg'], 'hash': 'e04c5b119bc4ab5f899c3d2af8d25bfe8e295ef5c5b0367c29b406dea46e645a', 'meta_uris': ['https://nftr.pro/tests/testMeta.json'], 'meta_hash': 'f4b4f9a055dde716870a72e99aa3a61748cbe31f300a6fc533699300822755f8', 'license_uris': ['https://nftr.pro/tests/testLicense.md'], 'license_hash': '6738c0576f1ba0f7aa41f687ceb97bbabc361380e73e75b6abbce6a718146c6e', 'royalty_address': 'txch1p7whlpguvjrq6jmxfdppn3tv3kqpu834m0j0t5p63n2gugp4ur3qrxkzg0', 'royalty_percentage': 500, 'target_address': 'txch1p7whlpguvjrq6jmxfdppn3tv3kqpu834m0j0t5p63n2gugp4ur3qrxkzg0', 'edition_number': 1, 'edition_count': 1, 'fee': 615000000}
     #print(nft_mint_nft(data))
     #print(list_wallets())
 #main()
