@@ -144,10 +144,10 @@ def file_hash(list):
     hash = ''
     u = 0
     hash_list = []
-    print('hashing url list: {} with length: {}'.format(list[0], len(list[0])))
-    while u < len(list[0]):
-        print('attempting hash for {}'.format(list[0][u]))
-        hash = FileHash(None, str(list[0][u]))
+    print('hashing url list: {} with length: {}'.format(list, len(list)))
+    while u < len(list):
+        print('attempting hash for {}'.format(list[u]))
+        hash = FileHash(None, str(list[u]))
         hash_list.append(hash)
         print('hash list: {}'.format(hash_list))
         if u > 0: #separate into own function and iterate though full hash list at once
@@ -194,7 +194,9 @@ def url_split(url):  # splits urls prio to file hashing if multiple are present 
         print('attempting url split for {}'.format(url))
         list = url.replace(" ", "")
         list = [list.split(',')] #to-do add handling for blank entries after comma
-        print(len(list[0]))
+        list = list[0]
+        print(len(list))
+        print(type(list))
     except Exception as e:
         print('URL split failed')
         list = url
@@ -240,7 +242,7 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
         else:
             print('error adding wallet ID to json data')
         if values['_U_']:
-            nft_data['uris'][0] = str(values['_U_'])
+            nft_data['uris'] = url_split(values['_U_'])
         else:
             print('error adding file url to json data')
         if fileHash:
@@ -248,7 +250,7 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
         else:
             print('error adding file hash to json data')
         if values['_MU_']:
-            nft_data['meta_uris'][0] = str(values['_MU_'])
+            nft_data['meta_uris'] = url_split(values['_MU_'])
         else:
             print('error adding meta URL to json data')
         if metaHash:
@@ -257,7 +259,7 @@ def mint_nft(settings, values, fileHash, metaHash, licenseHash): #creates the ne
             print('error adding meta hash to json data')
 
         if values['_LU_']:
-            nft_data['license_uris'][0] = str(values['_LU_'])
+            nft_data['license_uris'] = url_split(values['_LU_'])
         else:
             print('error adding license URL to json data')
 
