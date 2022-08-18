@@ -25,6 +25,7 @@
 ## Usage
 
 ```sh
+cd gui
 python GUI.py
 ```
 
