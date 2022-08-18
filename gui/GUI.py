@@ -230,6 +230,48 @@ def page_refresh(settings, window, values):
     message = "Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}% \n \n Minting Fees: 65,000,001 Mojo".format(values['_EN_'], values['_EC_'], values['_U_'], fileHash, values['_MU_'], metaHash, values['_LU_'], licenseHash, rp)
     return message, fileHash, metaHash, licenseHash
 
+########################################## Loading GIF ##########################################
+def loading(): #to-do add in main loop as a subprocess or thread
+    for i in range(5):
+        sg.PopupAnimated(loadingGIF, background_color='white', time_between_frames=100)
+    sg.PopupAnimated(None)
+
+########################################## Define Threading ##########################################
+def monitor_window(status, i, note):
+    if status == False:
+        state = 'Minting in Progress'
+    elif status == True:
+        state = 'Minted Successfully'
+    mintStatus = [[sg.Text('Minting Status:', justification='r', size=(15,1)), sg.InputText(state, key='-STATUS-', use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())],
+                  [sg.Text('Elapsed Time:', justification='r', size=(15,1)), sg.InputText(note, key='-TIME-', use_readonly_for_disable=True, disabled=True, disabled_readonly_background_color=sg.theme_text_element_background_color())]]
+    columnMint = [[sg.Frame('', layout = mintStatus, border_width=10)]]
+    window = sg.Window('', columnMint, size=(425,125), keep_on_top=True, finalize=True, icon=CUSTOM_ICON, auto_close=True, auto_close_duration=5)
+
+    window.read()
+
+def mint_monitor():
+
+    i = 1
+    while i < 60:
+        status = rpc_client.get_transactions()
+        print(status)
+        duration = i * 5
+        note = '{} seconds'.format(duration)
+        print(note)
+        if status == 'Error identifying minting transaction':
+            Popup('Your NFT minting transaction cannot be identified! \nPlease monitor the chia client', '', True)
+            break
+        elif status == True:
+            print('Your NFT has successfully minted!')
+            monitor_window(status, i, note)
+            break
+        else:
+            monitor_window(status, i, note)
+            print('Your NFT is minting, please wait')
+            print(status)
+            print(i)
+        i += 1
+
 ########################################## Minting Confirmations  ##########################################
 def mint_popup(settings, values, fileHash, metaHash, licenseHash): #defines minting confirmation message #to-do add image display to preview
     rp = int(values['_RP_']) / 100
@@ -346,7 +388,9 @@ def mint(values, settings): #formats the json object based on the dict object an
             if response['success'] == False:
                 Popup(' Error while minting NFT! \n Please check entries and try again: \n{}\n\n{}'.format(response, data), '', True)
             else:
-                Popup('Minting NFT: \nThe process can take more than 2 minutes.\nThe NFT will appear in your Chia client once minted', '', True)
+                #Popup('Minting NFT: \nThe process can take more than 2 minutes.\nThe NFT will appear in your Chia client once minted', '', True)
+                #threading.Thread(target=mint_monitor, args=(), daemon=True).start()
+                mint_monitor()
     else:
         Popup(' Chia instance is not synced \n Please verify your chia instance is synced and reconfirm this mint', '', True)
 
@@ -370,12 +414,6 @@ def create_about_window(settings):
     window = sg.Window('About', column1, size=(425,250), keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
 
     return window
-
-########################################## Loading GIF ##########################################
-def loading(time): #to-do add in main loop as a subprocess or thread
-    for i in range(time):
-        sg.PopupAnimated(loadingGIF, background_color='white', time_between_frames=100)
-    sg.PopupAnimated(None)
 
 ########################################## Main Program Window ##########################################
 def create_main_window(settings):
@@ -434,21 +472,6 @@ def create_main_window(settings):
                       right_click_menu=right_click_menu,
                       size=(1450,450),
                       icon=CUSTOM_ICON)
-
-########################################## Define Threading ##########################################
-def the_thread(): #threading to be used for file uploads and monitoring transactions, not currently in use
-    i = 0
-    while True:
-        try:
-            network_name = rpc_client.get_network()
-            if network_name != NETWORK_NAME:
-                print(f'Chia instance is operating on {network_name}')
-            print(rpc_client.get_sync())
-            i += 1
-        except Exception as e:
-            print('login_status: ')
-            print('Could not contact Chia instance, please make sure it is running and synced')
-        time.sleep(7)
 
 ########################################## Define Threading ##########################################
 def sync_verify(): #sync and network verification

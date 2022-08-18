@@ -218,6 +218,16 @@ def nft_get_wallet_did(wallet_id):
         did_id = 'Error identifying DID ID'
     return did_id
 
+def get_transactions():
+    url_option = "get_transactions"
+    json_data = {"wallet_id": 1, "start": 0, "stop": 1, "reverse": False}
+    response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+    if response['success'] == True:
+        status = response['transactions'][0]['confirmed']
+    else:
+        status = 'Error identifying minting transaction'
+    return status
+
 
 #these print commands are used for testing the above RPCs
 #def main():
@@ -240,4 +250,5 @@ def nft_get_wallet_did(wallet_id):
     #print(nft_mint_nft(data))
     #print(list_wallets())
     #print(nft_get_wallet_did(3))
+    #print(get_transactions())
 #main()
