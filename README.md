@@ -4,11 +4,11 @@
   <a href="https://github.com/kefranabg/readme-md-generator/graphs/commit-activity" target="_blank">
     <img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" />
   </a>
-  <a href="http://www.apache.org/licenses/" target="_blank">
-    <img alt="License: Apache" src="https://img.shields.io/github/license/BrandtH22/MINTr Local NFT Minting Tool" />
+  <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">
+    <img alt="License: Apache" src="https://img.shields.io/github/license/NFTr/mintingtool" />
   </a>
   <a href="https://twitter.com/NFTr\_pro" target="_blank">
-    <img alt="Twitter: NFTr\_pro" src="https://img.shields.io/twitter/follow/NFTr\_pro.svg?style=social" />
+    <img alt="Twitter: NFTr\_pro" src="https://img.shields.io/twitter/follow/NFTr_pro.svg?style=social" />
   </a>
 </p>
 
@@ -26,12 +26,6 @@
 
 ```sh
 python GUI.py
-```
-
-## Run tests
-
-```sh
-npm run test
 ```
 
 ## Author
