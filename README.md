@@ -1,7 +1,9 @@
 <h1 align="center">Welcome to MINTr Local NFT Minting Tool 👋</h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.4.0--alpha-blue.svg?cacheSeconds=2592000" />
-  <a href="https://github.com/kefranabg/readme-md-generator/graphs/commit-activity" target="_blank">
+  <a href="https://github.com/NFTr/mintingtool/releases/tag/v0.4.0-alpha" target="_blank">
+    <img alt="Version" src="https://img.shields.io/badge/version-0.4.0--alpha-blue.svg?cacheSeconds=2592000" />
+  </a>
+  <a href="https://github.com/NFTr/mintingtool/graphs/commit-activity" target="_blank">
     <img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" />
   </a>
   <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">
