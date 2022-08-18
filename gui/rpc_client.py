@@ -12,7 +12,7 @@ urllib3.disable_warnings()
 
 json_data = '{}'
 nft_wallet_data = '{"wallet_id": 83}' #to-do add this data into GUI.py as parameters
-did_wallet_data = '{"wallet_id": 82}' #to-do add this data into GUI.py as parameters
+did_wallet_data = '{"wallet_id": 83}' #to-do add this data into GUI.py as parameters
 wallet_RPC_port = 'localhost:9256'
 homeDir = path.expanduser('~')
 cert = (homeDir+'/.chia/mainnet/config/ssl/wallet/private_wallet.crt', homeDir+'/.chia/mainnet/config/ssl/wallet/private_wallet.key')
@@ -35,7 +35,8 @@ class WalletAPIwrapper():
                                     headers = {'content-type': 'application/json'},
                                     json=json_data,
                                     ).json()
-        except:
+        except Exception as e:
+            print(e)
             self._log.error('Error found while querying the wallet, {} with json {}:\n'.format(url_option,
                                                                                                  json_data))
             return None
@@ -107,7 +108,12 @@ def get_fingerprints(): #returns all fingerprints from the chia instance
 
 def get_fingerprint(): #returns the currently signed in fingerprint
     url_option = "get_logged_in_fingerprint"
-    return WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+    response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+    if response['success'] == True:
+        fingerprint = response['fingerprint']
+    else:
+        fingerprint = 'Error Retrieving Fingerprint, Verify Chia Client is Running'
+    return fingerprint
 
 def login_chia(fingerprint): #log in via RPC, to be used for future functionality
     data = '{{}}'.format(fingerprint)
@@ -202,6 +208,16 @@ def get_address():
     address = response['address']
     return address
 
+def nft_get_wallet_did(wallet_id):
+    url_option = "nft_get_wallet_did"
+    json_data = {"wallet_id": wallet_id}
+    response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+    if response['success'] == True:
+        did_id = response['did_id']
+    else:
+        did_id = 'Error identifying DID ID'
+    return did_id
+
 
 #these print commands are used for testing the above RPCs
 #def main():
@@ -223,4 +239,5 @@ def get_address():
     #data = {'wallet_id': 2, 'uris': ['https://nftr.pro/images/NFTr-logo.svg'], 'hash': 'e04c5b119bc4ab5f899c3d2af8d25bfe8e295ef5c5b0367c29b406dea46e645a', 'meta_uris': ['https://nftr.pro/tests/testMeta.json'], 'meta_hash': 'f4b4f9a055dde716870a72e99aa3a61748cbe31f300a6fc533699300822755f8', 'license_uris': ['https://nftr.pro/tests/testLicense.md'], 'license_hash': '6738c0576f1ba0f7aa41f687ceb97bbabc361380e73e75b6abbce6a718146c6e', 'royalty_address': 'txch1p7whlpguvjrq6jmxfdppn3tv3kqpu834m0j0t5p63n2gugp4ur3qrxkzg0', 'royalty_percentage': 500, 'target_address': 'txch1p7whlpguvjrq6jmxfdppn3tv3kqpu834m0j0t5p63n2gugp4ur3qrxkzg0', 'edition_number': 1, 'edition_count': 1, 'fee': 615000000}
     #print(nft_mint_nft(data))
     #print(list_wallets())
+    #print(nft_get_wallet_did(3))
 #main()
