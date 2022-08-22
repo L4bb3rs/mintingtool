@@ -1,8 +1,11 @@
+from datetime import datetime
+import os
+from traceback import format_exc
 import requests
 import urllib3
 import json
-import time
-from os import path
+from time import sleep
+from os import mkdir, path
 from logging import getLogger,\
     basicConfig,\
     INFO, DEBUG, WARNING, ERROR, CRITICAL,\
@@ -52,7 +55,7 @@ class ContextBase():
         self.exec_starttime = datetime.now()
 
         if not self._log:
-            self._log = gotLogger()
+            self._log = getLogger()
 
         return self
 
@@ -73,30 +76,26 @@ class json_ops_class():
 
         super(json_ops_class, self).__init__()
 
-    def read_json(self,
-                  json_filepath):
+    def read_json(self, json_filepath):
         while True:
             try:
                 with open(json_filepath, 'r') as json_in_handle:
-                    return load(json_in_handle)
-            except:
-                self._log.warning('Retrying load of {}, failed because \n{}'.format(json_filepath,
-                                                                        format_exc(chain=False)))
+                    return json.load(json_in_handle)
+            except Exception:
+                self._log.warning('Retrying load of {}, failed because \n{}'.format(json_filepath, format_exc(chain=False)))
+
             sleep(1)
 
-    def save_json(self,
-                  json_filepath,
-                  obj):
+    def save_json(self, json_filepath, obj):
         while True:
             try:
                 if not path.isdir(os.path.dirname(json_filepath)):
                     mkdir(os.path.dirname(json_filepath))
-
                 with open(json_filepath, 'w') as json_out_handle:
-                    return dump(obj, json_out_handle, indent=2)
-            except:
-                self._log.warning('Retrying dump in {}, failed because \n{}'.format(json_filepath,
-                                                                        format_exc(chain=Failse)))
+                    return json.dump(obj, json_out_handle, indent=2)
+            except Exception:
+                self._log.warning('Retrying dump in {}, failed because \n{}'.format(json_filepath, format_exc(chain=False)))
+
             sleep(1)
 
 def get_fingerprints(): #returns all fingerprints from the chia instance
@@ -109,11 +108,7 @@ def get_fingerprints(): #returns all fingerprints from the chia instance
 def get_fingerprint(): #returns the currently signed in fingerprint
     url_option = "get_logged_in_fingerprint"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    if response['success'] == True:
-        fingerprint = response['fingerprint']
-    else:
-        fingerprint = 'Error Retrieving Fingerprint, Verify Chia Client is Running'
-    return fingerprint
+    return response['fingerprint'] if response['success'] == True else 'Error Retrieving Fingerprint, Verify Chia Client is Running'
 
 def login_chia(fingerprint): #log in via RPC, to be used for future functionality
     data = '{{}}'.format(fingerprint)
@@ -130,18 +125,19 @@ def list_nfts(): #lists all NFTs from the default nft wallet, need to expand to 
         nft_list = nft_list + response['nft_list'][nft]['launcher_id'] + '\n'
     return nft_list
 
-def list_nft_wallets(): #lists the id of all NFT wallets that have associated dids
+def list_nft_wallets():
     nft_wallet_list = []
     url_option = "nft_get_wallets_with_dids"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+
     if len(response['nft_wallets']) == 0:
         print('No NFT Wallets can be found, please create an NFT wallet and restart this application')
+
+    elif len(response['nft_wallets']) > 1:
+        nft_wallet_list.extend(wallet['wallet_id'] for wallet in response['nft_wallets'])
+
     else:
-        if len(response['nft_wallets']) > 1:
-            for wallet in response['nft_wallets']:
-                nft_wallet_list.append(wallet['wallet_id'])
-        else:
-            nft_wallet_list = response['nft_wallets'][0]['wallet_id']
+        nft_wallet_list = response['nft_wallets'][0]['wallet_id']
     return nft_wallet_list
 
 def list_dids(): #to-do link this call to GUI.py to pull DID for selected wallet (one method of doing so, other method is extracting DID information from nft wallet command above)
@@ -150,19 +146,23 @@ def list_dids(): #to-do link this call to GUI.py to pull DID for selected wallet
     json_data = json.loads(did_wallet_data)
     return WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
 
-def list_wallets(): #lists all wallets with id, type, and name
+def list_wallets():
     wallet_list = ''
     url_option = "nft_get_wallets_with_dids"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
+
     if len(response['nft_wallets']) == 0:
         print('No NFT Wallets can be found, please create an NFT wallet and restart this application')
+
         wallet_list = 'No NFT Wallets can be found, please create an NFT wallet and restart this application'
+
+    elif len(response) > 1:
+        for w in range(len(response['nft_wallets'])):
+            wallet_list = wallet_list + (' Wallet_ID: ' + str(response['nft_wallets'][w]['wallet_id']) + '\n DID: ' + response['nft_wallets'][w]['did_id'] + '\n \n')
+
     else:
-        if len(response) > 1:
-            for w in range(len(response['nft_wallets'])):
-                wallet_list = wallet_list + (' Wallet_ID: ' + str(response['nft_wallets'][w]['wallet_id']) + '\n DID: ' + response['nft_wallets'][w]['did_id'] + '\n \n')
-        else:
-            wallet_list = ' Wallet_ID: ' + response['nft_wallets'][0]['wallet_id'] + '\n DID: ' + response['nft_wallets'][0]['did_id']
+        wallet_list = ' Wallet_ID: ' + response['nft_wallets'][0]['wallet_id'] + '\n DID: ' + response['nft_wallets'][0]['did_id']
+
     return wallet_list
 
 def get_network(): #network prefix field has been added for future functionality
@@ -179,26 +179,25 @@ def get_network(): #network prefix field has been added for future functionality
         network_prefix = 'unknown'
     return network_name
 
-def get_sync(): #currently lists did from default did wallet, need to expand to iterate through did wallets
+def get_sync():
+    '''currently lists did from default did wallet, need to expand to iterate through did wallets'''
     sync_status = ''
     url_option = "get_sync_status"
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    if response != None:
-        if response['synced'] == False:
-            if response['syncing'] == True:
-                sync_status = 'Syncing'
-            else: sync_status = 'Not Synced'
-        else: sync_status = 'Synced'
-    else:
-        print('The wallet RPC cannot be reached to verify sync status, make sure Chia is running')
-        sync_status = 'Not Synced'
-    return sync_status
 
-def nft_mint_nft(data): #currently lists did from default did wallet, need to expand to iterate through did wallets
+    if response is None:
+        print('The wallet RPC cannot be reached to verify sync status, make sure Chia is running')
+
+        return 'Not Synced'
+    elif response['synced'] == False:
+        return 'Syncing' if response['syncing'] == True else 'Not Synced'
+    else:
+        return 'Synced'
+
+def nft_mint_nft(data):
     url_option = "nft_mint_nft"
     json_data = data
-    response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    return response
+    return WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
 
 def get_address():
     url_option = "get_next_address"
@@ -212,21 +211,15 @@ def nft_get_wallet_did(wallet_id):
     url_option = "nft_get_wallet_did"
     json_data = {"wallet_id": wallet_id}
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    if response['success'] == True:
-        did_id = response['did_id']
-    else:
-        did_id = 'Error identifying DID ID'
-    return did_id
+
+    return response['did_id'] if response['success'] == True else 'Error identifying DID ID'
 
 def get_transactions():
     url_option = "get_transactions"
     json_data = {"wallet_id": 1, "start": 0, "stop": 1, "reverse": False}
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    if response['success'] == True:
-        status = response['transactions'][0]['confirmed']
-    else:
-        status = 'Error identifying minting transaction'
-    return status
+
+    return response['transactions'][0]['confirmed'] if response['success'] == True else 'Error identifying minting transaction'
 
 
 #these print commands are used for testing the above RPCs

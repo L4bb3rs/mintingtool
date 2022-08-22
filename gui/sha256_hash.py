@@ -5,7 +5,7 @@ import requests
 
 def sha256Checksum(filePath, fileUrl):
     m = hashlib.sha256()
-    if fileUrl==None:
+    if fileUrl is None:
         with open(filePath, 'rb') as fh:
             m = hashlib.sha256()
             while True:
@@ -17,5 +17,5 @@ def sha256Checksum(filePath, fileUrl):
     else:
         r = requests.get(fileUrl)
         for data in r.iter_content(8192):
-             m.update(data)
+            m.update(data)
         return m.hexdigest()
