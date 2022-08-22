@@ -152,14 +152,14 @@ def create_settings_window(settings):
 
 ########################################## Define File Hashing ##########################################
 def file_hash(list):
-    hash = ''
+    fhash = ''
     u = 0
     hash_list = []
     print('hashing url list: {} with length: {}'.format(list, len(list)))
     while u < len(list):
         print('attempting hash for {}'.format(list[u]))
-        hash = FileHash(None, str(list[u]))
-        hash_list.append(hash)
+        fhash = FileHash(None, str(list[u]))
+        hash_list.append(fhash)
         print('hash list: {}'.format(hash_list))
         if u > 0: #separate into own function and iterate though full hash list at once
             if hash_list[u] == hash_list[0]:
@@ -176,25 +176,25 @@ def file_hash(list):
                 print('################### END FAILED HASH #################')
         else:
             hash_verify = hash_list[0]
-        u = u + 1
+        u += 1
     return hash_verify
 
 def hashing(values):
     try:
-        list = url_split(values['_U_'])   # Verifies URLs are entered for each field, to-do iterate over list of fields
-        fileHash = file_hash(list)
+        nlist = url_split(values['_U_'])   # Verifies URLs are entered for each field, to-do iterate over list of fields
+        fileHash = file_hash(nlist)
     except Exception as e:
         print('error deriving file hash, please verify url(s)')
         fileHash = 'error'
     try:
-        list = url_split(values['_MU_'])
-        metaHash = file_hash(list)
+        nlist = url_split(values['_MU_'])
+        metaHash = file_hash(nlist)
     except Exception as e:
         print('error deriving metafile hash, please verify url(s)')
         metaHash = 'error'
     try:
-        list = url_split(values['_LU_'])
-        licenseHash = file_hash(list)
+        nlist = url_split(values['_LU_'])
+        licenseHash = file_hash(nlist)
     except Exception as e:
         print('error deriving license hash, please verify url(s)')
         licenseHash = 'error'
@@ -203,15 +203,15 @@ def hashing(values):
 def url_split(url):  # splits urls prio to file hashing if multiple are present and separated with commas
     try:
         print('attempting url split for {}'.format(url))
-        list = url.replace(" ", "")
-        list = [list.split(',')] #to-do add handling for blank entries after comma
-        list = list[0]
+        nlist = url.replace(" ", "")
+        nlist = [list.split(',')] #to-do add handling for blank entries after comma
+        nlist = list[0]
         print(len(list))
         print(type(list))
     except Exception as e:
         print('URL split failed')
-        list = url
-    return list
+        nlist = url
+    return nlist
 
 ########################################## Define Page Refresh ##########################################
 def refresh(settings, window, values):
@@ -231,8 +231,8 @@ def page_refresh(settings, window, values):
     return message, fileHash, metaHash, licenseHash
 
 ########################################## Loading GIF ##########################################
-def loading(): #to-do add in main loop as a subprocess or thread
-    for i in range(5):
+def loading():
+    for _ in range(5):
         sg.PopupAnimated(loadingGIF, background_color='white', time_between_frames=100)
     sg.PopupAnimated(None)
 
@@ -288,89 +288,85 @@ def mint_confirm(message, values, settings): #creates minting confirmation popup
         cancel_mint()
 
 ########################################## Minting the NFT  ##########################################
-def build_dict(settings, values, fileHash, metaHash, licenseHash): #creates the necessary dict object for minting
+def build_dict(settings, values, fileHash, metaHash, licenseHash):
     jsonError = ''
     try:
         nft_wallet_did = rpc_client.nft_get_wallet_did(settings['nft_wallet_id'])
         nft_data['did_id'] = nft_wallet_did
-    except:
+    except Exception:
         nft_wallet_did = None
         nft_data['did_id'] = nft_wallet_did
         print('No DID is associated with the selected wallet')
         jsonError = 'No DID is associated with the selected wallet'
     try:
-        if settings['nft_wallet_id']:   # to-do iterate through these checks
+        if settings['nft_wallet_id']:
             nft_data['wallet_id'] = int(settings['nft_wallet_id'])
         else:
             print('error adding wallet ID to json data')
-            jsonError = jsonError + '\nError adding wallet ID to json data'
+            jsonError += '\nError adding wallet ID to json data'
         if values['_U_']:
             nft_data['uris'] = url_split(values['_U_'])
         else:
             print('error adding file url to json data')
-            jsonError = jsonError + '\nError adding file url to json data'
+            jsonError += '\nError adding file url to json data'
         if fileHash:
             nft_data['hash'] = fileHash
         else:
             print('error adding file hash to json data')
-            jsonError = jsonError + '\nError adding file hash to json data'
+            jsonError += '\nError adding file hash to json data'
         if values['_MU_']:
             nft_data['meta_uris'] = url_split(values['_MU_'])
         else:
             print('error adding meta URL to json data')
-            jsonError = jsonError + '\nError adding meta URL to json data'
+            jsonError += '\nError adding meta URL to json data'
         if metaHash:
             nft_data['meta_hash'] = metaHash
         else:
             print('error adding meta hash to json data')
-            jsonError = jsonError + '\nError adding meta hash to json data'
+            jsonError += '\nError adding meta hash to json data'
         if values['_LU_']:
             nft_data['license_uris'] = url_split(values['_LU_'])
         else:
             print('error adding license URL to json data')
-            jsonError = jsonError + '\nError adding license URL to json data'
+            jsonError += '\nError adding license URL to json data'
         if licenseHash:
             nft_data['license_hash'] = licenseHash
         else:
             print('error adding license hash to json data')
-            jsonError = jsonError + '\nError adding license hash to json data'
-
+            jsonError += '\nError adding license hash to json data'
         if settings['wallet_address']:
             nft_data['royalty_address'] = settings['wallet_address']
         else:
             print('error adding royalty address to json data')
-            jsonError = jsonError + '\nError adding royalty address to json data'
-
+            jsonError += '\nError adding royalty address to json data'
         if values['_RP_']:
             nft_data['royalty_percentage'] = int(values['_RP_'])
         else:
             print('error adding royalty percentage to json data')
-            jsonError = jsonError + '\nError adding royalty percentage to json data'
+            jsonError += '\nError adding royalty percentage to json data'
         if settings['wallet_address']:
             nft_data['target_address'] = settings['wallet_address']
         else:
             print('error adding target wallet to json data')
-            jsonError = jsonError + '\nError adding target wallet to json data'
+            jsonError += '\nError adding target wallet to json data'
         if values['_EN_']:
-            nft_data['edition_number'] =  int(values['_EN_'])
+            nft_data['edition_number'] = int(values['_EN_'])
         else:
             print('error adding edition number to json data')
-            jsonError = jsonError + '\nError adding edition number to json data'
+            jsonError += '\nError adding edition number to json data'
         if values['_EC_']:
             nft_data['edition_count'] = int(values['_EC_'])
         else:
             print('error adding edition count to json data')
-            jsonError = jsonError + '\nError adding edition count to json data'
-        if jsonError == '':
+            jsonError += '\nError adding edition count to json data'
+        if not jsonError:
             data_dump = json.dumps(nft_data)
-        elif jsonError == 'No DID is associated with the selected wallet':
-            Popup(jsonError, '', True) #to-do add optional confirmation to continue without DID
-            data_dump = 'error'
         else:
             Popup(jsonError, '', True)
             data_dump = 'error'
     except Exception as e:
         Popup('Could not create json data for NFT! \n Please verify inputs and try again', '', True)
+
         data_dump = 'error'
     return data_dump
 
@@ -400,20 +396,11 @@ def cancel_mint(): #cancels minting to allow user to edit information
 ########################################## About Window ##########################################
 def create_about_window(settings):
     sg.theme(settings['theme'])
+    aboutSection = [[TextLabel1('Developer'), OutputText1('NFTr')], [TextLabel1('Website'), OutputText1('https://nftr.pro/')], [TextLabel1('Discord'), OutputText1('https://discord.gg/j7PmvGv5ra')], [TextLabel1('Twitter'), OutputText1('https://twitter.com/NFTr_pro')], [TextLabel1('Github'), OutputText1('https://github.com/NFTr/mintingtool')], [TextLabel1('Email'), OutputText1('info@nftr.pro')]]
 
-    aboutSection = [[TextLabel1('Developer'), OutputText1('NFTr')],
-                   [TextLabel1('Website'), OutputText1('https://nftr.pro/')],
-                   [TextLabel1('Discord'), OutputText1('https://discord.gg/j7PmvGv5ra')],
-                   [TextLabel1('Twitter'), OutputText1('https://twitter.com/NFTr_pro')],
-                   [TextLabel1('Github'), OutputText1('https://github.com/NFTr/mintingtool')],
-                   [TextLabel1('Email'), OutputText1('info@nftr.pro')]]
+    column1 = [[sg.Frame('About Mintr', layout=aboutSection, border_width=10)], [sg.Button('Close')]]
 
-
-    column1 = [[sg.Frame('About Mintr', layout = aboutSection, border_width=10)], [sg.Button('Close')]]
-
-    window = sg.Window('About', column1, size=(425,250), keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
-
-    return window
+    return sg.Window('About', column1, size=(425, 250), keep_on_top=True, finalize=True, icon=CUSTOM_ICON)
 
 ########################################## Main Program Window ##########################################
 def create_main_window(settings):
