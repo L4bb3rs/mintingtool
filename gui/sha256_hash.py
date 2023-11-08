@@ -9,10 +9,10 @@ def sha256Checksum(filePath, fileUrl):
         with open(filePath, 'rb') as fh:
             m = hashlib.sha256()
             while True:
-                data = fh.read(8192)
-                if not data:
+                if data := fh.read(8192):
+                    m.update(data)
+                else:
                     break
-                m.update(data)
             return m.hexdigest()
     else:
         r = requests.get(fileUrl)
