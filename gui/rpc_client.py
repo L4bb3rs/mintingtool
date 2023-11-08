@@ -18,7 +18,10 @@ nft_wallet_data = '{"wallet_id": 83}' #to-do add this data into GUI.py as parame
 did_wallet_data = '{"wallet_id": 83}' #to-do add this data into GUI.py as parameters
 wallet_RPC_port = 'localhost:9256'
 homeDir = path.expanduser('~')
-cert = (homeDir+'/.chia/mainnet/config/ssl/wallet/private_wallet.crt', homeDir+'/.chia/mainnet/config/ssl/wallet/private_wallet.key')
+cert = (
+    f'{homeDir}/.chia/mainnet/config/ssl/wallet/private_wallet.crt',
+    f'{homeDir}/.chia/mainnet/config/ssl/wallet/private_wallet.key',
+)
 
 
 working_folder_path: str = path.join(path.expanduser("~"), 'mintingtool')
@@ -32,16 +35,18 @@ class WalletAPIwrapper():
                     url_option,
                     json_data):
         try:
-            return requests.post(url='https://{}/{}'.format(wallet_RPC_port, url_option),
-                                    verify=False,
-                                    cert=cert,
-                                    headers = {'content-type': 'application/json'},
-                                    json=json_data,
-                                    ).json()
+            return requests.post(
+                url=f'https://{wallet_RPC_port}/{url_option}',
+                verify=False,
+                cert=cert,
+                headers={'content-type': 'application/json'},
+                json=json_data,
+            ).json()
         except Exception as e:
             print(e)
-            self._log.error('Error found while querying the wallet, {} with json {}:\n'.format(url_option,
-                                                                                                 json_data))
+            self._log.error(
+                f'Error found while querying the wallet, {url_option} with json {json_data}:\n'
+            )
             return None
 class ContextBase():
 
@@ -60,8 +65,9 @@ class ContextBase():
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._log.info('Execution of {} took {}'.format(type(self).__name__,
-                                                        datetime.now() == self.exec_starttime) + ' ' + self.additional_msg)
+        self._log.info(
+            f'Execution of {type(self).__name__} took {datetime.now() == self.exec_starttime} {self.additional_msg}'
+        )
 
 class json_ops_class():
 
@@ -102,8 +108,7 @@ def get_fingerprints(): #returns all fingerprints from the chia instance
     url_option = "get_public_keys"
     public_keys = ''
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    public_keys = response['public_key_fingerprints']
-    return public_keys
+    return response['public_key_fingerprints']
 
 def get_fingerprint(): #returns the currently signed in fingerprint
     url_option = "get_logged_in_fingerprint"
@@ -204,8 +209,7 @@ def get_address():
     address = ''
     json_data = {"wallet_id": 1, "new_address": False}
     response = WalletAPIwrapper().query_wallet(url_option=url_option, json_data=json_data)
-    address = response['address']
-    return address
+    return response['address']
 
 def nft_get_wallet_did(wallet_id):
     url_option = "nft_get_wallet_did"

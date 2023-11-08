@@ -68,13 +68,16 @@ def text_label2(text): return sg.Text(
     text+':', justification='l', size=(11, 1))
 
 
-def text_label3(text): return sg.Text(text+':', justification='l', size=(3, 1))
-def text_label4(text): return sg.Text(text+':', justification='l', size=(5, 1))
+def text_label3(text):
+    return sg.Text(f'{text}:', justification='l', size=(3, 1))
+def text_label4(text):
+    return sg.Text(f'{text}:', justification='l', size=(5, 1))
 def text_label5(text): return sg.Text(
     text+':', justification='l', size=(12, 1))
 
 
-def text_label6(text): return sg.Text(text+':', justification='l', size=(8, 1))
+def text_label6(text):
+    return sg.Text(f'{text}:', justification='l', size=(8, 1))
 
 
 def output_text1(text): return sg.InputText(text, use_readonly_for_disable=True, disabled=True,
@@ -236,25 +239,24 @@ def file_hash(list):
     fhash = ''
     u = 0
     hash_list = []
-    print('hashing url list: {} with length: {}'.format(list, len(list)))
+    print(f'hashing url list: {list} with length: {len(list)}')
     while u < len(list):
-        print('attempting hash for {}'.format(list[u]))
+        print(f'attempting hash for {list[u]}')
         fhash = FileHash(None, str(list[u]))
         hash_list.append(fhash)
-        print('hash list: {}'.format(hash_list))
+        print(f'hash list: {hash_list}')
         if u > 0:  # separate into own function and iterate though full hash list at once
             if hash_list[u] == hash_list[0]:
                 print('################# HASH CONFIRMED ###################')
-                print('hash #{} matches the first url file hash'.format(u+1))
+                print(f'hash #{u + 1} matches the first url file hash')
                 hash_verify = hash_list[0]
                 print('################# END CONFIRMED HASH ###############')
             else:
                 print('################### HASH FAILED #####################')
-                print('hash #{} does not match the first url file hash\n'.format(u+1))
-                print('first file hash: {}'.format(hash_list[0]))
-                print('mismatched file hash: {}'.format(hash_list[u]))
-                hash_verify = 'hash #{} does not match the first url file hash'.format(
-                    u+1)
+                print(f'hash #{u + 1} does not match the first url file hash\n')
+                print(f'first file hash: {hash_list[0]}')
+                print(f'mismatched file hash: {hash_list[u]}')
+                hash_verify = f'hash #{u + 1} does not match the first url file hash'
                 print('################### END FAILED HASH #################')
         else:
             hash_verify = hash_list[0]
@@ -288,7 +290,7 @@ def hashing(values):
 def url_split(url):
     """splits urls prio to file hashing if multiple are present and separated with commas"""
     try:
-        print('attempting url split for {}'.format(url))
+        print(f'attempting url split for {url}')
         nlist = url.replace(" ", "")
         # to-do add handling for blank entries after comma
         nlist = [list.split(',')]
@@ -319,8 +321,7 @@ def page_refresh(settings, window, values):
     filehash, metahash, licensehash = hashing(
         values)  # to-do add image display to preview
     rp = int(values['_RP_']) / 100
-    message = "Edition: {} out of {} \n \n File URL: {} \n \n File Hash: {} \n \n MetaData URL: {} \n \n MetaData Hash: {} \n \n License URL: {} \n \n License Hash: {} \n \n Royalty Percentage: {}% \n \n Minting Fees: 65,000,001 Mojo".format(
-        values['_EN_'], values['_EC_'], values['_U_'], filehash, values['_MU_'], metahash, values['_LU_'], licensehash, rp)
+    message = f"Edition: {values['_EN_']} out of {values['_EC_']} \n \n File URL: {values['_U_']} \n \n File Hash: {filehash} \n \n MetaData URL: {values['_MU_']} \n \n MetaData Hash: {metahash} \n \n License URL: {values['_LU_']} \n \n License Hash: {licensehash} \n \n Royalty Percentage: {rp}% \n \n Minting Fees: 65,000,001 Mojo"
     return message, filehash, metahash, licensehash
 
 
@@ -355,7 +356,7 @@ def mint_monitor():
         status = rpc_client.get_transactions()
         print(status)
         duration = i * 5
-        note = '{} seconds'.format(duration)
+        note = f'{duration} seconds'
         print(note)
         if status == 'Error identifying minting transaction':
             print(
@@ -487,8 +488,11 @@ def mint(values, settings):  # formats the json object based on the dict object 
         data_dump = build_dict(
             settings, values, filehash, metahash, licensehash)
         if data_dump == 'error':
-            print(' Error while minting NFT! \n Please check entries and try again: \n{}'.format(
-                data_dump), '', True)
+            print(
+                f' Error while minting NFT! \n Please check entries and try again: \n{data_dump}',
+                '',
+                True,
+            )
         else:
             data = json.loads(data_dump)
             # to-do pull response for transaction, run transaction monitor
@@ -496,8 +500,11 @@ def mint(values, settings):  # formats the json object based on the dict object 
             response = rpc_client.nft_mint_nft(data)
             print(response)
             if response['success'] == False:
-                print(' Error while minting NFT! \n Please check entries and try again: \n{}\n\n{}'.format(
-                    response, data), '', True)
+                print(
+                    f' Error while minting NFT! \n Please check entries and try again: \n{response}\n\n{data}',
+                    '',
+                    True,
+                )
             else:
                 #print('Minting NFT: \nThe process can take more than 2 minutes.\nThe NFT will appear in your Chia client once minted', '', True)
                 #threading.Thread(target=mint_monitor, args=(), daemon=True).start()
